@@ -72,3 +72,21 @@ def dokelly(df, ir=0, G=None, h=None, alpha=0):
             prekelly = cvxopt_solve_qp(themat, -adjmeans, G, h)
             
     return (1+ir)*prekelly
+
+# Correct Sharpe computation
+
+def realvol(s, n):
+    themean = s.mean()+1
+    thevar = s.var()
+    m2 = themean * themean
+    t1 = thevar + m2
+    thestd =  math.sqrt(math.pow(t1, n) - math.pow(m2, n))
+    return thestd
+
+def realmean(s, n):
+    themean = s.mean()+1
+    totalmean = math.pow(themean, n) - 1
+    return totalmean
+
+def realsharpe(s, n):
+    return realmean(s, n)/realvol(s, n)
