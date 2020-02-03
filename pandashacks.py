@@ -3,10 +3,8 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 def detrend(df, cols, inplace=False, suffix="_dt"):
-    oldindex = df.index.name
-    df['ordnum']=df.reset_index.index
+    df['ordnum']=df.reset_index().index
     ordf = df[['ordnum']]
-    df.set_index(oldindex, inplace=True)
     for c in cols:
         curcol = df[c]
         thereg = LinearRegression()
