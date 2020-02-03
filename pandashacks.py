@@ -1,6 +1,27 @@
 import pandas as pd
 import numpy as np
+from sklearn.linear_model import LinearRegression
 
+def detrend(df, cols, inplace=False, suffix="_dt"):
+    oldindex = df.index.name
+    df.reset_index(inplace=True)
+    df.reset_index(inplace=True)
+    df.rename(columns={'index':'ordnum'})
+    ordf = df[['ordnum']]
+    df.set_index(oldindex, inplace=True)
+    for c in cols:
+        curcol = df[c]
+        thereg = LinearRegression()
+        thereg.fit(ordf, curcol)
+        residuals = curcol - thereg.predict(ordf)
+        if inplace is True:
+            df[c] = residuals
+        else:
+            newname = c + suffix
+            df[newname] = residuals
+    df.drop('ordnum', axis=1, inplace=True)
+    return df
+    
 def dodrawdown(df):
     """computes the drawdown of a time series."""
     dfsum = df.cumsum()
