@@ -4,9 +4,7 @@ from sklearn.linear_model import LinearRegression
 
 def detrend(df, cols, inplace=False, suffix="_dt"):
     oldindex = df.index.name
-    df.reset_index(inplace=True)
-    df.reset_index(inplace=True)
-    df.rename(columns={'index':'ordnum'})
+    df['ordnum']=df.reset_index.index
     ordf = df[['ordnum']]
     df.set_index(oldindex, inplace=True)
     for c in cols:
@@ -19,9 +17,15 @@ def detrend(df, cols, inplace=False, suffix="_dt"):
         else:
             newname = c + suffix
             df[newname] = residuals
-    df.drop('ordnum', axis=1, inplace=True)
+    #df.drop('ordnum', axis=1, inplace=True)
     return df
-    
+
+def recovercoefs(orig, residuals):
+    regline = orig - residuals
+    inter = regline[0]
+    coef = regline[1]-regline[0]
+    return inter, coef, regline
+
 def dodrawdown(df):
     """computes the drawdown of a time series."""
     dfsum = df.cumsum()
