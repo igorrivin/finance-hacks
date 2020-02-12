@@ -2,21 +2,28 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-def detrend(df, cols, inplace=False, suffix="_dt"):
+def detrend(df, cols, begin=None, end=None,inplace=False, suffix="_dt"):
     df['ordnum']=df.reset_index().index
+    newcols=[]
     ordf = df[['ordnum']]
+    if begin is None:
+        beg = 0
     for c in cols:
         curcol = df[c]
         thereg = LinearRegression()
-        thereg.fit(ordf, curcol)
+        if end is None:
+            thereg.fit(ordf.iloc[beg:], curcol.iloc[beg:])
+        else:
+            thereg.fit(ordf.iloc[beg:end], curcol.iloc[beg:end]) 
         residuals = curcol - thereg.predict(ordf)
         if inplace is True:
             df[c] = residuals
         else:
             newname = c + suffix
             df[newname] = residuals
+            newcols.append(newname)
     #df.drop('ordnum', axis=1, inplace=True)
-    return df
+    return newcols
 
 def recovercoefs(orig, residuals):
     regline = orig - residuals
