@@ -31,6 +31,9 @@ def recovercoefs(orig, residuals):
     coef = regline[1]-regline[0]
     return inter, coef, regline
 
+def retrend(inputs, outres, inter, coef):
+    return outres + inter + inputs * coef
+
 def dodrawdown(df):
     """computes the drawdown of a time series."""
     dfsum = df.cumsum()
