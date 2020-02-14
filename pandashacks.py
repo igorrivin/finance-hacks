@@ -12,9 +12,9 @@ def detrend(df, cols, begin=None, end=None,inplace=False, suffix="_dt"):
         curcol = df[c]
         thereg = LinearRegression()
         if end is None:
-            thereg.fit(ordf.iloc[beg:], curcol.iloc[beg:])
+            thereg.fit(ordf.iloc[begin:], curcol.iloc[begin:])
         else:
-            thereg.fit(ordf.iloc[beg:end], curcol.iloc[beg:end]) 
+            thereg.fit(ordf.iloc[begin:end], curcol.iloc[begin:end]) 
         residuals = curcol - thereg.predict(ordf)
         if inplace is True:
             df[c] = residuals
