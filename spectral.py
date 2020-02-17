@@ -20,15 +20,45 @@ def doforecast(df, cols, howmany, start=None, end=None, winsize=None, indices=No
     return fc
 
 def fullpred(df, cols, howmany=1, beg=None, end=None):
-    newcols = detrend(df, cols, beg, end)
-    mssa = MSSA(n_components='parallel_analysis',pa_percentile_threshold=95,window_size=None, verbose=True)
+    if beg is None:
+        beg = 0
+    if end is None:
+        end = len(df)
+    newcols, idict, cdict = detrend(df, cols, beg, end)
+    #mssa = MSSA(n_components='parallel_analysis',pa_percentile_threshold=95,window_size=None, verbose=True)
+    mssa = MSSA(n_components=11,pa_percentile_threshold=95,window_size=None, verbose=True,svd_method='randomized_gpu')
     X_train = mssa.fit(df[newcols].iloc[beg:end])
     fc = mssa.forecast(howmany)
-    return fc
+    return fc, idict, cdict
 
 def dorange(df, cols, howmany=1, beg=None, end=None, iters=1):
     ar = []
+    ilist = []
+    clist = []
+    indlist = []
+    if beg is None:
+        beg=0
+    if end is None:
+        end = len(df)
     for i in range(iters):
-        res = fullpred(df, cols, howmany, beg, end+i)
+        res, idict, cdict = fullpred(df, cols, howmany, beg, end+i)
         ar.append(res[:, -1])
-    return np.vstack(ar)
+        ilist.append(idict)
+        clist.append(cdict)
+        indlist.append(end+howmany+i-1)
+    indser = pd.Series(indlist, name='ordnum')
+    #print(indser)
+    idf = pd.DataFrame(ilist)[cols]
+    #print(idf)
+    cdf = pd.DataFrame(clist)[cols]
+    #print(cdf)
+    cdf2 = cdf.multiply(indser, axis=0)
+    #print(cdf2)
+    resdf = pd.DataFrame(np.vstack(ar), columns=cols)
+    #print(resdf)
+    newdf = resdf * cdf2 + idf
+    #print(newdf)
+    newdf = pd.concat([indser, newdf], axis=1)
+    return newdf, resdf
+
+

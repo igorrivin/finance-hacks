@@ -6,6 +6,8 @@ def detrend(df, cols, begin=None, end=None,inplace=False, suffix="_dt"):
     df['ordnum']=df.reset_index().index
     newcols=[]
     ordf = df[['ordnum']]
+    interdict = {}
+    coefdict = {}
     if begin is None:
         beg = 0
     for c in cols:
@@ -18,12 +20,17 @@ def detrend(df, cols, begin=None, end=None,inplace=False, suffix="_dt"):
         residuals = curcol - thereg.predict(ordf)
         if inplace is True:
             df[c] = residuals
+            newname = c
         else:
             newname = c + suffix
             df[newname] = residuals
             newcols.append(newname)
+        interdict[c] = thereg.intercept_
+        interdict[newname] = thereg.intercept_
+        coefdict[c] = thereg.coef_[0]
+        coefdict[newname] = thereg.coef_[0]
     #df.drop('ordnum', axis=1, inplace=True)
-    return newcols
+    return newcols, interdict, coefdict
 
 def recovercoefs(orig, residuals):
     regline = orig - residuals
@@ -68,7 +75,7 @@ def adjrets(df, market, window = 45, thebetas = None):
     return newdf.dropna()
 
 from numpy.linalg import pinv, svd
-import cvxopt
+#import cvxopt
 
 def cvxopt_solve_qp(P, q, G=None, h=None, A=None, b=None):
     P = .5 * (P + P.T)  # make sure P is symmetric

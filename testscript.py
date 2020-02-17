@@ -12,8 +12,8 @@ import pandas_datareader.data as web
 from pymssa2 import MSSA
 
 import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="1,2"
+#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+#os.environ["CUDA_VISIBLE_DEVICES"]="1,2"
 
 spy = web.DataReader("SPY", "av-daily-adjusted", start=datetime(2000, 2, 9), api_key=os.getenv('ALPHAVANTAGE_API_KEY')).close.map(np.log)
 iwm = web.DataReader("IWM", "av-daily-adjusted", start=datetime(2000, 2, 9), api_key=os.getenv('ALPHAVANTAGE_API_KEY')).close.map(np.log)
@@ -24,6 +24,8 @@ mydf = pd.concat([spy, iwm, dia, qqq], axis=1)
 mydf.index=pd.to_datetime(mydf.index)
 mydf.columns = ['spy', 'iwm', 'dia', 'qqq']
 mydf.dropna(inplace=True)
-foor = dorange(mydf, ['spy', 'iwm', 'dia', 'qqq'], 10, 0, 1000, 10)
-foordf = pd.DataFrame(foor)
-foordf.to_csv('foordf.csv')
+foor, thear = dorange(mydf, ['spy', 'iwm', 'dia', 'qqq'], 10, 0, 1000, 2)
+foordf = pd.DataFrame(thear)
+foor.to_csv('preds.csv')
+foordf.to_csv('res.csv')
+
