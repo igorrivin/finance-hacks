@@ -27,9 +27,19 @@ def fullpred(df, cols, howmany=1, beg=None, end=None):
         end = len(df)
     newcols, idict, cdict = detrend(df, cols, beg, end)
     mssa = MSSA(n_components=11,pa_percentile_threshold=95,window_size=None, verbose=True)
-    X_train = mssa.fit(df[newcols].iloc[beg:end])
+    mssa.fit(df[newcols].iloc[beg:end])
     fc = mssa.forecast(howmany)
     return fc, idict, cdict
+
+def fullpred_simple(df, cols, howmany=1, beg=None, end=None):
+    if beg is None:
+        beg = 0
+    if end is None:
+        end = len(df)
+    mssa = MSSA(n_components="parallel_analysis",pa_percentile_threshold=95,window_size=None, verbose=True)
+    mssa.fit(df[cols].iloc[beg:end])
+    fc = mssa.forecast(howmany)
+    return fc
 
 def processpred(indlist, ilist, clist, ar, cols):
     indser = pd.Series(indlist, name='ordnum')
@@ -42,7 +52,15 @@ def processpred(indlist, ilist, clist, ar, cols):
     newdf.columns = newcols
     newdf = pd.concat([indser, newdf], axis=1)
     return newdf, resdf
-    
+
+def processpred_simple(indlist, ar, cols):
+    indser = pd.Series(indlist, name='ordnum')
+    newdf = pd.DataFrame(np.vstack(ar), columns=cols)
+    newcols = [i+"_pred" for i in newdf.columns]
+    newdf.columns = newcols
+    newdf = pd.concat([indser, newdf], axis=1)
+    return newdf
+
 def dorange(df, cols, howmany=1, beg=None, end=None, iters=1):
     ar = []
     ilist = []
@@ -81,6 +99,17 @@ class oneprediction(object):
     def __call__(self, i):
         return fullpred(self.df, self.cols, self.howmany, self.beg, self.end + i)
 
+class oneprediction_simple(object):
+    def __init__(self, df, cols, howmany, beg, end):
+        self.df = df
+        self.cols = cols
+        self.howmany =howmany
+        self.beg = beg
+        self.end = end
+
+    def __call__(self, i):
+        return fullpred_simple(self.df, self.cols, self.howmany, self.beg, self.end + i)
+
 
 def dorangemulti(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16):
     if beg is None:
@@ -96,3 +125,15 @@ def dorangemulti(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16):
     clist = [i[2] for i in tmp]
     indlist = [end + howmany + i -1 for i in range(iters)]
     return processpred(indlist, ilist, clist, ar, cols)
+
+def dorangemulti_simple(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16):
+    if beg is None:
+        beg=0
+    if end is None:
+        end = len(df)
+    pool=Pool(poolsize)
+    predatomic=oneprediction_simple(df, cols, howmany, beg, end)
+    tmp = pool.map(predatomic, range(iters))
+    ar = [res[:, -1] for res in tmp]
+    indlist = [end + howmany + i -1 for i in range(iters)]
+    return processpred_simple(indlist, ar, cols)
