@@ -24,7 +24,9 @@ mydf = pd.concat([spy, iwm, dia, qqq], axis=1)
 mydf.index=pd.to_datetime(mydf.index)
 mydf.columns = ['spy', 'iwm', 'dia', 'qqq']
 mydf.dropna(inplace=True)
-foor, thear = dorange(mydf, ['spy', 'iwm', 'dia', 'qqq'], 10, 0, 1000, 2)
+mydf['ordnum']=mydf.reset_index().index
+mydf.to_csv('historical.csv')
+foor, thear = dorangemulti(mydf, ['spy', 'iwm', 'dia', 'qqq'], 10, 0, 1000, 5000, 32)
 foordf = pd.DataFrame(thear)
 foor.to_csv('preds.csv')
 foordf.to_csv('res.csv')
