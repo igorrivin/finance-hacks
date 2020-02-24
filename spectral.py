@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from pymssa2 import MSSA
 from multiprocessing import Pool
+from np.random import 
 
 def doforecast(df, cols, howmany, start=None, end=None, winsize=None, indices=None):
     newdf = df[cols]
@@ -134,8 +135,28 @@ def dorangemulti_simple(df, cols, howmany=1, beg=None, end=None, iters=1, poolsi
     if end is None:
         end = len(df)
     pool=Pool(poolsize)
-    predatomic=oneprediction_simple(df, cols, howmany, beg, end, n_components, winsize)
+    predatomic=oneprediction_simple(df, cols, howmany, beg, end, iters, n_components, winsize)
     tmp = pool.map(predatomic, range(iters))
     ar = [res[:, -1] for res in tmp]
     indlist = [end + howmany + i -1 for i in range(iters)]
     return processpred_simple(indlist, ar, cols)
+
+def dorangemulti_dict(df, cols, beg, end, iters, poolsize, valdict):
+    howmany = valdict["howmany"]
+    n_components = valdict["components"]
+    winsize = valdict["winsize"]
+    return dorangemulti_single(df, cols, howmany, beg, end, iters, poolsize, n_components, winsize)
+
+class trialclass(object):
+    def __init__(df, cols, beg, end, iters, poolsize):
+        self.df = df
+        self.cols = cols
+        self.beg = beg
+        self.end = end
+        self.iters = iters
+        self.poolsize = poolsize
+
+    def __call__(self, valdict):
+        return dorangemulti_dict(self.df, self.cols, self.beg, self.end, self.iters, self.poolsize, valdict)
+
+
