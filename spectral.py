@@ -31,12 +31,12 @@ def fullpred(df, cols, howmany=1, beg=None, end=None):
     fc = mssa.forecast(howmany)
     return fc, idict, cdict
 
-def fullpred_simple(df, cols, howmany=1, beg=None, end=None):
+def fullpred_simple(df, cols, howmany=1, beg=None, end=None, n_components="parallel_analysis", winsize=None):
     if beg is None:
         beg = 0
     if end is None:
         end = len(df)
-    mssa = MSSA(n_components="parallel_analysis",pa_percentile_threshold=95,window_size=None, verbose=True)
+    mssa = MSSA(n_components=n_components,pa_percentile_threshold=95,window_size=winsize, verbose=True)
     mssa.fit(df[cols].iloc[beg:end])
     fc = mssa.forecast(howmany)
     return fc
@@ -100,15 +100,17 @@ class oneprediction(object):
         return fullpred(self.df, self.cols, self.howmany, self.beg, self.end + i)
 
 class oneprediction_simple(object):
-    def __init__(self, df, cols, howmany, beg, end):
+    def __init__(self, df, cols, howmany, beg, end, n_components, winsize):
         self.df = df
         self.cols = cols
         self.howmany =howmany
         self.beg = beg
         self.end = end
+        self.n_components=n_components
+        self.winsize=winsize
 
     def __call__(self, i):
-        return fullpred_simple(self.df, self.cols, self.howmany, self.beg, self.end + i)
+        return fullpred_simple(self.df, self.cols, self.howmany, self.beg, self.end + i, self.n_components, self.winsize)
 
 
 def dorangemulti(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16):
@@ -126,13 +128,13 @@ def dorangemulti(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16):
     indlist = [end + howmany + i -1 for i in range(iters)]
     return processpred(indlist, ilist, clist, ar, cols)
 
-def dorangemulti_simple(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16):
+def dorangemulti_simple(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16, n_components="parallel_analysis", winsize=None):
     if beg is None:
         beg=0
     if end is None:
         end = len(df)
     pool=Pool(poolsize)
-    predatomic=oneprediction_simple(df, cols, howmany, beg, end)
+    predatomic=oneprediction_simple(df, cols, howmany, beg, end, n_components, winsize)
     tmp = pool.map(predatomic, range(iters))
     ar = [res[:, -1] for res in tmp]
     indlist = [end + howmany + i -1 for i in range(iters)]
