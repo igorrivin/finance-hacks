@@ -129,11 +129,11 @@ def dorangemulti(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16):
     indlist = [end + howmany + i -1 for i in range(iters)]
     return processpred(indlist, ilist, clist, ar, cols)
 
-def dorangemulti_simple(df, cols, howmany=1, beg=None, end=None, iters=1, poolsize=16, n_components="parallel_analysis", winsize=None):
+def dorangemulti_simple(df, cols, *, howmany=1, beg=None, end=None, iters=1, poolsize=16, n_components="parallel_analysis", winsize=None):
     if beg is None:
         beg=0
     if end is None:
-        end = len(df)
+        end = len(df-howmany)
     pool=Pool(poolsize)
     predatomic=oneprediction_simple(df, cols, howmany, beg, end, n_components, winsize)
     tmp = pool.map(predatomic, range(iters))
