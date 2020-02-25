@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from pymssa2 import MSSA
 from multiprocessing import Pool
-from np.random import 
+from numpy.random import randint
 
 def doforecast(df, cols, howmany, start=None, end=None, winsize=None, indices=None):
     newdf = df[cols]
@@ -135,7 +135,7 @@ def dorangemulti_simple(df, cols, howmany=1, beg=None, end=None, iters=1, poolsi
     if end is None:
         end = len(df)
     pool=Pool(poolsize)
-    predatomic=oneprediction_simple(df, cols, howmany, beg, end, iters, n_components, winsize)
+    predatomic=oneprediction_simple(df, cols, howmany, beg, end, n_components, winsize)
     tmp = pool.map(predatomic, range(iters))
     ar = [res[:, -1] for res in tmp]
     indlist = [end + howmany + i -1 for i in range(iters)]

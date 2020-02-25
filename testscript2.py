@@ -16,16 +16,15 @@ import os
 #os.environ["CUDA_VISIBLE_DEVICES"]="1,2"
 
 spy = web.DataReader("SPY", "av-daily-adjusted", start=datetime(2000, 2, 9), api_key=os.getenv('ALPHAVANTAGE_API_KEY')).close
-iwm = web.DataReader("IWM", "av-daily-adjusted", start=datetime(2000, 2, 9), api_key=os.getenv('ALPHAVANTAGE_API_KEY')).close
 dia = web.DataReader("DIA", "av-daily-adjusted", start=datetime(2000, 2, 9), api_key=os.getenv('ALPHAVANTAGE_API_KEY')).close
 qqq = web.DataReader("QQQ", "av-daily-adjusted", start=datetime(2000, 2, 9), api_key=os.getenv('ALPHAVANTAGE_API_KEY')).close
 
-mydf = pd.concat([spy, iwm, dia, qqq], axis=1)
+mydf = pd.concat([spy, dia, qqq], axis=1)
 mydf.index=pd.to_datetime(mydf.index)
-mydf.columns = ['spy', 'iwm', 'dia', 'qqq']
+mydf.columns = ['spy', 'dia', 'qqq']
 mydf['ordnum'] = mydf.reset_index().index
 mydf.dropna(inplace=True)
 mydf.to_csv('hist.csv')
-foor = dorangemulti_simple(mydf, ['spy', 'iwm', 'dia', 'qqq'], 10, 0, 1000, 200, 8)
+foor = dorangemulti_simple(mydf, ['spy', 'dia', 'qqq'], 40, 0, 1000, 3923, 16, 15, None)
 foor.to_csv('preds.csv')
 
