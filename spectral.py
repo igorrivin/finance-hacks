@@ -4,6 +4,7 @@ import numpy as np
 from pymssa2 import MSSA
 from multiprocessing import Pool
 from numpy.random import randint
+from sklearn.metrics import r2_score
 
 def doforecast(df, cols, howmany, start=None, end=None, winsize=None, indices=None):
     newdf = df[cols]
@@ -136,7 +137,10 @@ def dorangemulti_simple(df, cols, *, howmany=1, beg=None, end=None, iters=1, poo
         end = len(df-howmany)
     pool=Pool(poolsize)
     predatomic=oneprediction_simple(df, cols, howmany, beg, end, n_components, winsize)
-    tmp = pool.map(predatomic, range(iters))
+    if poolsize == 1:
+        tmp = [predatomic(i) for i in range(iters)]
+    else:
+        tmp = pool.map(predatomic, range(iters))
     ar = [res[:, -1] for res in tmp]
     indlist = [end + howmany + i -1 for i in range(iters)]
     return processpred_simple(indlist, ar, cols)
@@ -145,10 +149,17 @@ def dorangemulti_dict(df, cols, beg, end, iters, poolsize, valdict):
     howmany = valdict["howmany"]
     n_components = valdict["components"]
     winsize = valdict["winsize"]
-    return dorangemulti_single(df, cols, howmany, beg, end, iters, poolsize, n_components, winsize)
+    return dorangemulti_simple(df, cols, 
+            howmany=howmany, 
+            beg=beg, 
+            end=end, 
+            iters=iters, 
+            poolsize=poolsize, 
+            n_components=n_components, 
+            winsize=winsize)
 
 class trialclass(object):
-    def __init__(df, cols, beg, end, iters, poolsize):
+    def __init__(self, df, cols, beg, end, iters, poolsize):
         self.df = df
         self.cols = cols
         self.beg = beg
@@ -160,3 +171,25 @@ class trialclass(object):
         return dorangemulti_dict(self.df, self.cols, self.beg, self.end, self.iters, self.poolsize, valdict)
 
 
+class randtrial(trialclass):
+    def __init__(self, df, cols, begrange, endrange, iters, poolsize):
+        self.df = df
+        self.cols = cols
+        self.beg = randint(*begrange)
+        self.end = randint(*endrange)
+        self.iters = iters
+        self.poolsize = poolsize
+
+def doscore(origdf, preddf):
+    df1 = origdf.set_index('ordnum')
+    df2 = preddf.set_index('ordnum')
+    cols1 = df1.columns
+    cols2 = df2.columns
+    joined = df1.join(df2).dropna()
+    return r2_score(joined[df1.columns], joined[df2.columns])
+
+class trialscored(randtrial):
+    def __call__(self, valdict):
+        preds = dorangemulti_dict(self.df, self.cols, self.beg, self.end, self.iters, self.poolsize, valdict)
+        return doscore(self.df, preds)
+    
