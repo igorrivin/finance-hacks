@@ -149,6 +149,8 @@ def dorangemulti_dict(df, cols, beg, end, iters, poolsize, valdict):
     howmany = valdict["howmany"]
     n_components = valdict["components"]
     winsize = valdict["winsize"]
+    if winsize is True:
+        winsize = None
     return dorangemulti_simple(df, cols, 
             howmany=howmany, 
             beg=beg, 
@@ -171,14 +173,18 @@ class trialclass(object):
         return dorangemulti_dict(self.df, self.cols, self.beg, self.end, self.iters, self.poolsize, valdict)
 
 
-class randtrial(trialclass):
+class randtrial(object):
     def __init__(self, df, cols, begrange, endrange, iters, poolsize):
         self.df = df
         self.cols = cols
-        self.beg = randint(*begrange)
-        self.end = randint(*endrange)
+        self.begrange = begrange
+        self.endrange = endrange
         self.iters = iters
         self.poolsize = poolsize
+    def __call__(self, valdict):
+        beg = randint(*self.begrange)
+        end = randint(*self.endrange)
+        return dorangemulti_dict(self.df, self.cols, beg, end, self.iters, self.poolsize, valdict)
 
 def doscore(origdf, preddf):
     df1 = origdf.set_index('ordnum')
@@ -186,10 +192,12 @@ def doscore(origdf, preddf):
     cols1 = df1.columns
     cols2 = df2.columns
     joined = df1.join(df2).dropna()
-    return r2_score(joined[df1.columns], joined[df2.columns])
+    return r2_score(joined[cols1], joined[cols2])
 
 class trialscored(randtrial):
     def __call__(self, valdict):
-        preds = dorangemulti_dict(self.df, self.cols, self.beg, self.end, self.iters, self.poolsize, valdict)
+        beg = randint(*self.begrange)
+        end = randint(*self.endrange)
+        preds = dorangemulti_dict(self.df, self.cols, beg, end, self.iters, self.poolsize, valdict)
         return doscore(self.df, preds)
     
