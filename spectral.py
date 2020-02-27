@@ -195,9 +195,17 @@ def doscore(origdf, preddf):
     return r2_score(joined[cols1], joined[cols2])
 
 class trialscored(randtrial):
+    def __init__(self, df, cols, begrange, endrange, iters, poolsize, evalfunc=doscore):
+        super().__init__(df, cols, begrange, endrange, iters, poolsize)
+        self.evalfunc=evalfunc
     def __call__(self, valdict):
-        beg = randint(*self.begrange)
-        end = randint(*self.endrange)
-        preds = dorangemulti_dict(self.df, self.cols, beg, end, self.iters, self.poolsize, valdict)
-        return doscore(self.df, preds)
-    
+        preds = super().__call__(valdict)
+        return self.evalfunc(self.df, preds)
+
+def doscorelog(origdf, preddf):
+    df1 = origdf.set_index('ordnum')
+    df2 = preddf.set_index('ordnum')
+    cols1 = df1.columns
+    cols2 = df2.columns
+    joined = df1.join(df2).dropna()
+    return r2_score(np.log(joined[cols1]), np.log(joined[cols2]))
