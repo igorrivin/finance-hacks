@@ -65,7 +65,7 @@ def main(args):
     shortdesc = open(shortname, "a")
     print(best_parameters, file=shortdesc)
     print(values, file=shortdesc)
-    close(shortdesc)
+    shortdesc.close()
     save(experiment, fname)
 
 if __name__ == "__main__":
