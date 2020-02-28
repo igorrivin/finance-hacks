@@ -60,6 +60,7 @@ def main(args):
         ],
         experiment_name="ssa_test",
         objective_name="ssa",
+        total_trials=1000,
         evaluation_function = ssaeval
     )
     shortdesc = open(shortname, "a")
