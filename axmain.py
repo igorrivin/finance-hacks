@@ -60,7 +60,8 @@ def main(args):
         ],
         experiment_name="ssa_test",
         objective_name="ssa",
-        evaluation_function = ssaeval
+        total_trials = 100,
+        evaluation_function = ssaeval,
     )
     shortdesc = open(shortname, "a")
     print(best_parameters, file=shortdesc)
